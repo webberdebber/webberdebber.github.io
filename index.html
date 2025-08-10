@@ -1,5 +1,288 @@
-<p>Hello!</p>
-<p>This is the main exproprietary page.</p>
-<p>Testing...</p>
-<p>Hello!</p>
-<p><img src="https://ih1.redbubble.net/image.4569252647.6787/bg,f8f8f8-flat,750x,075,f-pad,750x1000,f8f8f8.jpg" alt="" /></p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MySQL Scanner Pro</title>
+    <style>
+        :root {
+            --hacker-green: #00ff00;
+            --dark-bg: #0a0a0a;
+            --card-bg: #111;
+            --warning: #ffff00;
+            --danger: #ff0000;
+            --info: #00ffff;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: var(--dark-bg);
+            color: var(--hacker-green);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            background-color: var(--card-bg);
+            border: 1px solid #333;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.1);
+        }
+        
+        pre {
+            margin: 0;
+            color: var(--hacker-green);
+            font-family: inherit;
+        }
+        
+        input, button {
+            background-color: #222;
+            color: var(--hacker-green);
+            border: 1px solid #333;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: inherit;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        button {
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        button:hover {
+            background-color: #333;
+            box-shadow: 0 0 8px rgba(0, 255, 0, 0.4);
+        }
+        
+        .result {
+            margin-top: 20px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        
+        .section {
+            margin-bottom: 20px;
+            border-left: 3px solid var(--hacker-green);
+            padding-left: 10px;
+        }
+        
+        .success {
+            color: var(--hacker-green);
+        }
+        
+        .warning {
+            color: var(--warning);
+        }
+        
+        .danger {
+            color: var(--danger);
+        }
+        
+        .info {
+            color: var(--info);
+        }
+        
+        .tag {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+        
+        .ssl-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        
+        .ssl-good {
+            background-color: #006600;
+            color: #00ff00;
+        }
+        
+        .ssl-bad {
+            background-color: #660000;
+            color: #ff6666;
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background-color: #333;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            width: 0%;
+            background-color: var(--hacker-green);
+            transition: width 0.3s;
+        }
+        
+        @keyframes scan-animation {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+        
+        .scanning {
+            animation: scan-animation 1.5s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <pre>
+ ███╗   ███╗██╗   ██╗███████╗ ██████╗ ██╗     ███████╗
+ ████╗ ████║╚██╗ ██╔╝██╔════╝██╔═══██╗██║     ██╔════╝
+ ██╔████╔██║ ╚████╔╝ ███████╗██║   ██║██║     █████╗  
+ ██║╚██╔╝██║  ╚██╔╝  ╚════██║██║   ██║██║     ██╔══╝  
+ ██║ ╚═╝ ██║   ██║   ███████║╚██████╔╝███████╗███████╗
+ ╚═╝     ╚═╝   ╚═╝   ╚══════╝ ╚═════╝ ╚══════╝╚══════╝
+        </pre>
+        
+        <div>
+            <label for="ip">MySQL Server IP:</label>
+            <input type="text" id="ip" placeholder="e.g., 23.224.129.134" value="23.224.129.134">
+        </div>
+        <div>
+            <label for="port">Port:</label>
+            <input type="number" id="port" placeholder="3306" value="3306">
+        </div>
+        <button onclick="startScan()">Launch Scan</button>
+        
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        // API endpoint - replace with your actual URL
+        const API_URL = 'https://webberdebber.42web.io/api.php';
+        
+        async function startScan() {
+            const ip = document.getElementById('ip').value.trim();
+            const port = document.getElementById('port').value || 3306;
+            const resultDiv = document.getElementById('result');
+            const progressBar = document.getElementById('progress');
+            
+            // Reset UI
+            resultDiv.innerHTML = '';
+            progressBar.style.width = '0%';
+            
+            // Validate IP
+            if (!isValidIP(ip)) {
+                resultDiv.innerHTML = '<span class="danger">[✖] Invalid IP address format</span>';
+                return;
+            }
+            
+            // Show scanning animation
+            resultDiv.innerHTML = `
+                <span class="info scanning">[⚡] Scanning ${ip}:${port}...</span>
+                <span class="info scanning">[🌍] Gathering network intelligence...</span>
+                <span class="info scanning">[🔍] Analyzing MySQL protocol...</span>
+            `;
+            
+            // Animate progress bar
+            animateProgress(progressBar);
+            
+            try {
+                // Make API call
+                const response = await fetch(`${API_URL}?ip=${ip}&port=${port}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Display results
+                displayResults(data, resultDiv);
+                progressBar.style.backgroundColor = '#00ff00';
+                
+            } catch (error) {
+                resultDiv.innerHTML += `\n<span class="danger">[✖] Error: ${error.message}</span>`;
+                progressBar.style.backgroundColor = '#ff0000';
+            } finally {
+                progressBar.style.width = '100%';
+            }
+        }
+        
+        function animateProgress(progressBar) {
+            let width = 0;
+            const interval = setInterval(() => {
+                if (width >= 90) {
+                    clearInterval(interval);
+                    return;
+                }
+                width += 10;
+                progressBar.style.width = `${width}%`;
+            }, 300);
+        }
+        
+        function isValidIP(ip) {
+            const ipPattern = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+            return ipPattern.test(ip);
+        }
+        
+        function displayResults(data, resultDiv) {
+            const sslStatus = data.data.capabilities.ssl ? 
+                '<span class="ssl-badge ssl-good">SSL: ENABLED</span>' : 
+                '<span class="ssl-badge ssl-bad">SSL: DISABLED</span>';
+            
+            const secureConnection = data.data.capabilities.secure_connection ?
+                '<span class="success">✔ Secure connection</span>' :
+                '<span class="danger">✖ Insecure connection</span>';
+            
+            let output = `
+                <div class="section">
+                    <span class="success">[✓] Scan completed at ${new Date().toLocaleString()}</span>
+                </div>
+                
+                <div class="section">
+                    <span class="info">[📡] NETWORK INFORMATION</span>
+                    <div>• IP Address: ${data.ip}:${data.port}</div>
+                    <div>• Location: ${data.geo.city}, ${data.geo.country} <small>(${data.geo.lat}, ${data.geo.lon})</small></div>
+                    <div>• ISP: ${data.geo.isp}</div>
+                    <div>• AS: ${data.geo.as}</div>
+                </div>
+                
+                <div class="section">
+                    <span class="info">[🔍] MYSQL SERVER DETAILS</span>
+                    <div>• Version: <strong>${data.data.version}</strong></div>
+                    <div>• Protocol: ${data.data.protocol}</div>
+                    <div>• Authentication Salt: <code>${data.data.salt}</code></div>
+                    <div>• Connection Security: ${secureConnection}</div>
+                    <div>• ${sslStatus}</div>
+                </div>
+                
+                <div class="section">
+                    <span class="info">[⚙️] TECHNICAL DATA</span>
+                    <div>• Timestamp: ${data.data.timestamp}</div>
+                    <div>• Raw Protocol Data: <small><code>${JSON.stringify(data.data, null, 2)}</code></small></div>
+                </div>
+                
+                <div class="section">
+                    <span class="success">[✓] Scan completed successfully</span>
+                    <div class="warning">⚠️ This scan was performed without authentication. Results may vary.</div>
+                </div>
+            `;
+            
+            resultDiv.innerHTML = output;
+        }
+    </script>
+</body>
+</html>
