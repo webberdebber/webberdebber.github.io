@@ -172,7 +172,7 @@
 
     <script>
         // API endpoint - replace with your actual URL
-        const API_URL = 'https://webberdebber.42web.io/api.php';
+        const API_URL = 'https://nextjs-boilerplate-six-xi-50.vercel.app/api/scan';
         
         async function startScan() {
             const ip = document.getElementById('ip').value.trim();
@@ -239,50 +239,75 @@
         }
         
         function displayResults(data, resultDiv) {
-            const sslStatus = data.data.capabilities.ssl ? 
-                '<span class="ssl-badge ssl-good">SSL: ENABLED</span>' : 
-                '<span class="ssl-badge ssl-bad">SSL: DISABLED</span>';
-            
-            const secureConnection = data.data.capabilities.secure_connection ?
-                '<span class="success">✔ Secure connection</span>' :
-                '<span class="danger">✖ Insecure connection</span>';
-            
-            let output = `
-                <div class="section">
-                    <span class="success">[✓] Scan completed at ${new Date().toLocaleString()}</span>
-                </div>
-                
-                <div class="section">
-                    <span class="info">[📡] NETWORK INFORMATION</span>
-                    <div>• IP Address: ${data.ip}:${data.port}</div>
-                    <div>• Location: ${data.geo.city}, ${data.geo.country} <small>(${data.geo.lat}, ${data.geo.lon})</small></div>
-                    <div>• ISP: ${data.geo.isp}</div>
-                    <div>• AS: ${data.geo.as}</div>
-                </div>
-                
-                <div class="section">
-                    <span class="info">[🔍] MYSQL SERVER DETAILS</span>
-                    <div>• Version: <strong>${data.data.version}</strong></div>
-                    <div>• Protocol: ${data.data.protocol}</div>
-                    <div>• Authentication Salt: <code>${data.data.salt}</code></div>
-                    <div>• Connection Security: ${secureConnection}</div>
-                    <div>• ${sslStatus}</div>
-                </div>
-                
-                <div class="section">
-                    <span class="info">[⚙️] TECHNICAL DATA</span>
-                    <div>• Timestamp: ${data.data.timestamp}</div>
-                    <div>• Raw Protocol Data: <small><code>${JSON.stringify(data.data, null, 2)}</code></small></div>
-                </div>
-                
-                <div class="section">
-                    <span class="success">[✓] Scan completed successfully</span>
-                    <div class="warning">⚠️ This scan was performed without authentication. Results may vary.</div>
-                </div>
-            `;
-            
-            resultDiv.innerHTML = output;
+    // Destructure data for convenience
+    const {
+        ip, port, geo,
+        data: {
+            version, protocol, salt, timestamp, capabilities
+        },
+        rate_limit,
+    } = data;
+
+    // Geo fallback if missing
+    const geoInfo = geo && geo.status === 'success' ? geo : null;
+
+    // SSL badge
+    const sslBadge = capabilities.ssl 
+        ? '<span class="ssl-badge ssl-good">SSL: ENABLED</span>' 
+        : '<span class="ssl-badge ssl-bad">SSL: DISABLED</span>';
+
+    // Secure connection status
+    const secureConn = capabilities.secure_connection
+        ? '<span class="success">✔ Secure connection</span>'
+        : '<span class="danger">✖ Insecure connection</span>';
+
+    // Rate limit info
+    const rateLimitDisplay = rate_limit?.max === 'unlimited'
+        ? 'Unlimited'
+        : `${rate_limit.current} / ${rate_limit.max}`;
+
+    // Compose output HTML
+    const output = `
+    <div class="section">
+        <h3 class="success">Scan Summary</h3>
+        <p>Completed at: <strong>${new Date(timestamp).toLocaleString()}</strong></p>
+        <p>Rate Limit Usage: <strong>${rateLimitDisplay}</strong></p>
+    </div>
+
+    <div class="section">
+        <h3 class="info">Network Information</h3>
+        <p>IP Address: <strong>${ip}</strong></p>
+        <p>Port: <strong>${port}</strong></p>
+        ${
+          geoInfo
+            ? `<p>Location: <strong>${geoInfo.city}, ${geoInfo.regionName}, ${geoInfo.country}</strong> (${geoInfo.lat.toFixed(4)}, ${geoInfo.lon.toFixed(4)})</p>
+               <p>ISP: <strong>${geoInfo.isp}</strong></p>
+               <p>AS: <strong>${geoInfo.as}</strong></p>`
+            : `<p><em>GeoIP data not available</em></p>`
         }
+    </div>
+
+    <div class="section">
+        <h3 class="info">MySQL Server Details</h3>
+        <p>Version: <strong>${version}</strong></p>
+        <p>Protocol: <strong>${protocol}</strong></p>
+        <p>Authentication Salt: <code>${salt}</code></p>
+        <p>Connection Security: ${secureConn}</p>
+        <p>${sslBadge}</p>
+    </div>
+
+    <div class="section">
+        <h3 class="info">Technical Data (Raw)</h3>
+        <pre>${JSON.stringify(data.data, null, 2)}</pre>
+    </div>
+
+    <div class="section warning">
+        <strong>⚠️ Note:</strong> This scan was performed without authentication. Results may vary.
+    </div>
+    `;
+
+    resultDiv.innerHTML = output;
+}
     </script>
 </body>
 </html>
